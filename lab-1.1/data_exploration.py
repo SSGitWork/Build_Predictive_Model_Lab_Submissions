@@ -1,8 +1,10 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
+
 warnings.filterwarnings('ignore')
 
 print("=" * 60)
@@ -26,8 +28,8 @@ props2 = pd.read_csv('data/item_properties_part2.csv')
 # Hint: Use pd.concat and remember to ignore the original indexes so they form a continuous sequence
 item_props = pd.concat([props1, props2], ignore_index=True)
 
-print(f"    Events shape      : {events.shape if events is not None else 'Not Implemented'}")
-print(f"    Item props shape  : {item_props.shape if item_props is not None else 'Not Implemented'}")
+print(f"    Events shape      : {events.shape}")
+print(f"    Item props shape  : {item_props.shape}")
 
 
 # ==========================================
@@ -37,13 +39,16 @@ print("\n[2] Event type distribution:")
 
 # TODO: Compute the raw count of each unique value in the 'event' column of the events dataframe
 event_counts = events['event'].value_counts()
-print(event_counts.to_string() if event_counts is not None else "    Not Implemented")
+
+print(event_counts.to_string())
 
 print("\n    As % of total events:")
+
 # TODO: Calculate the percentage distribution of the event types, rounded to 2 decimal places
 # Hint: Divide the event_counts by the total length of the events dataframe and multiply by 100
 event_percentages = ((event_counts / len(events)) * 100).round(2)
-print(event_percentages.to_string() if event_percentages is not None else "    Not Implemented")
+
+print(event_percentages.to_string())
 
 
 # ==========================================
@@ -53,6 +58,7 @@ print("\n[3] Data quality check:")
 
 # TODO: Calculate the total number of missing/null values for each column in the events dataframe
 null_counts = events.isnull().sum()
+
 print(f"    Null values in events:\n{null_counts}")
 
 # TODO: The 'timestamp' column is in milliseconds. Convert it to a readable datetime format.
@@ -60,6 +66,7 @@ print(f"    Null values in events:\n{null_counts}")
 events['datetime'] = pd.to_datetime(events['timestamp'], unit='ms')
 
 print(f"\n    Events date range:")
+
 # TODO: Find and print the minimum and maximum dates in your new 'datetime' column
 print(f"    Start : {events['datetime'].min()}")
 print(f"    End   : {events['datetime'].max()}")
@@ -111,16 +118,19 @@ fig.suptitle(
 
 # --- Left Subplot: Bar Chart of Event Counts ---
 colors = ['#4C72B0', '#DD8452', '#55A868']
+
 # TODO: Plot a bar chart on axes[0] showing the counts of each event type
 # Hint: Use event_counts index for x-axis and values for y-axis
-bars = axes[0].bar(event_counts.index, event_counts.values, color=colors)
-
+bars = axes[0].bar(
+    event_counts.index,
+    event_counts.values,
+    color=colors[:len(event_counts)]
+)
 
 # TODO: Customize axes[0] by setting its Title ("Event Type Distribution"), X-label ("Event Type"), and Y-label ("Count")
 axes[0].set_title("Event Type Distribution")
 axes[0].set_xlabel("Event Type")
 axes[0].set_ylabel("Count")
-
 
 # TODO: (Optional/Bonus challenge for students):
 # Loop through the bars and add a text label displaying the raw count value slightly above each bar
@@ -147,12 +157,10 @@ axes[1].hist(
     edgecolor='white'
 )
 
-
 # TODO: Customize axes[1] by setting its Title ("Events per User Distribution"), X-label ("Number of Events"), and Y-label ("Number of Users")
 axes[1].set_title("Events per User Distribution")
 axes[1].set_xlabel("Number of Events")
 axes[1].set_ylabel("Number of Users")
-
 
 # TODO: Because a few users have massive amounts of events, change the Y-axis scale of axes[1] to logarithmic
 # Hint: Use axes[1].set_yscale()
@@ -162,9 +170,10 @@ axes[1].set_yscale('log')
 # --- Save and Render ---
 # TODO: Adjust the subplot layout automatically to prevent overlap text, save to 'output/01_eda_overview.png' with 150 DPI, and display the plot
 # Hint: use plt.tight_layout(), plt.savefig(), and plt.show()
+os.makedirs('output', exist_ok=True)
+
 plt.tight_layout(rect=[0, 0, 1, 0.93])
 plt.savefig('output/01_eda_overview.png', dpi=150, bbox_inches='tight')
 plt.show()
-
 
 print("    Saved -> output/01_eda_overview.png")

@@ -111,7 +111,9 @@ base_auc, base_ap, _ = train_and_evaluate(
     label="Baseline — Raw Features (Lab 1.2)"
 )
 
-results = [("Baseline — Raw Features (Lab 1.2)", base_auc, base_ap, len(RAW_FEATURES))]
+results = [
+    ("Baseline — Raw Features (Lab 1.2)", base_auc, base_ap, len(RAW_FEATURES))
+]
 
 # ---------------------------------------------------------------------------
 # SECTION 4: WAVE 1 — Ratio Features
@@ -131,7 +133,10 @@ user_df['views_per_day'] = (
     user_df['total_views'] / (user_df['active_days'] + 1)
 )
 
-WAVE1_FEATURES = RAW_FEATURES + ['cart_to_view_ratio', 'views_per_day']
+WAVE1_FEATURES = RAW_FEATURES + [
+    'cart_to_view_ratio',
+    'views_per_day'
+]
 
 # TODO: Evaluate performance across WAVE1_FEATURES using the training helper
 w1_auc, w1_ap, _ = train_and_evaluate(
@@ -139,7 +144,10 @@ w1_auc, w1_ap, _ = train_and_evaluate(
     WAVE1_FEATURES,
     label="Wave 1 — + Ratio Features"
 )
-results.append(("Wave 1 — + Ratio Features", w1_auc, w1_ap, len(WAVE1_FEATURES)))
+
+results.append(
+    ("Wave 1 — + Ratio Features", w1_auc, w1_ap, len(WAVE1_FEATURES))
+)
 
 # ---------------------------------------------------------------------------
 # SECTION 5: WAVE 2 — Datetime Features
@@ -197,7 +205,10 @@ w2_auc, w2_ap, _ = train_and_evaluate(
     WAVE2_FEATURES,
     label="Wave 2 — + Datetime Features"
 )
-results.append(("Wave 2 — + Datetime Features", w2_auc, w2_ap, len(WAVE2_FEATURES)))
+
+results.append(
+    ("Wave 2 — + Datetime Features", w2_auc, w2_ap, len(WAVE2_FEATURES))
+)
 
 # ---------------------------------------------------------------------------
 # SECTION 6: WAVE 3 — Interaction Terms
@@ -232,7 +243,10 @@ w3_auc, w3_ap, final_model = train_and_evaluate(
     WAVE3_FEATURES,
     label="Wave 3 — + Interaction Terms (Final)"
 )
-results.append(("Wave 3 — + Interaction Terms (Final)", w3_auc, w3_ap, len(WAVE3_FEATURES)))
+
+results.append(
+    ("Wave 3 — + Interaction Terms (Final)", w3_auc, w3_ap, len(WAVE3_FEATURES))
+)
 
 # ---------------------------------------------------------------------------
 # SECTION 7: Full Lift Summary Table
@@ -258,17 +272,27 @@ for stage, auc, ap, feature_count in results:
 # ---------------------------------------------------------------------------
 print("\n[7] Plotting lift progression...")
 
-stages = [r[0].split("—")[0].strip() for r in results]
-aucs = [r[1] for r in results]
-n_feats = [r[3] for r in results]
+stages = [result[0].split("—")[0].strip() for result in results]
+aucs = [result[1] for result in results]
+n_feats = [result[3] for result in results]
 colors = ['#9E9E9E', '#4C72B0', '#2E75B6', '#1B3A6B']
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-fig.suptitle("Lab 1.3: Feature Engineering Lift over Baseline\n(Each bar = one engineering wave added on top of previous)", fontsize=12, fontweight='bold')
+fig.suptitle(
+    "Lab 1.3: Feature Engineering Lift over Baseline\n"
+    "(Each bar = one engineering wave added on top of previous)",
+    fontsize=12,
+    fontweight='bold'
+)
 
 # --- Left Subplot: AUC Progression ---
 # TODO: Create a bar chart on axes[0] visualizing the change in AUC score over stages
-bars = axes[0].bar(stages, aucs, color=colors, edgecolor='white')
+bars = axes[0].bar(
+    stages,
+    aucs,
+    color=colors,
+    edgecolor='white'
+)
 
 # TODO: Overlay a target benchmark line using axes[0].axhline(y=0.80, color='red', linestyle='--')
 # Set titles, labels, x-ticks, and add values above each bar for context
@@ -283,7 +307,7 @@ axes[0].axhline(
 axes[0].set_title("AUC Performance Progression")
 axes[0].set_xlabel("Engineering Stage")
 axes[0].set_ylabel("ROC-AUC Score")
-axes[0].set_ylim(min(0.5, min(aucs) - 0.05), 1.0)
+axes[0].set_ylim(max(0.0, min(aucs) - 0.05), 1.0)
 axes[0].tick_params(axis='x', rotation=15)
 axes[0].legend(fontsize=9)
 
@@ -350,9 +374,10 @@ fig, ax = plt.subplots(figsize=(9, 6))
 # TODO: Trace an ax.barh metric representation detailing engineering output metrics
 # Optional Hint: slicing with [::-1] mirrors structures to present the most significant components at the top
 plot_df = imp_df.iloc[::-1].copy()
+top_three_features = set(imp_df.head(3)['feature'])
 
 bar_colors = [
-    '#D4AF37' if feature in imp_df.head(3)['feature'].values else '#4C72B0'
+    '#D4AF37' if feature in top_three_features else '#4C72B0'
     for feature in plot_df['feature']
 ]
 
@@ -363,13 +388,17 @@ ax.barh(
     edgecolor='white'
 )
 
-ax.set_title("Feature Importance — Full Engineered Set\n(Gold = top 3 features)", fontweight='bold')
+ax.set_title(
+    "Feature Importance — Full Engineered Set\n(Gold = top 3 features)",
+    fontweight='bold'
+)
 ax.set_xlabel("Importance (Gain)")
+ax.set_xlim(0, plot_df['importance'].max() * 1.15)
 
-for i, importance in enumerate(plot_df['importance']):
+for index, importance in enumerate(plot_df['importance']):
     ax.text(
         importance,
-        i,
+        index,
         f" {importance:.4f}",
         va='center',
         fontsize=8

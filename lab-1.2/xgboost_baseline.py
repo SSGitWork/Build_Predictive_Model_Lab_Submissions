@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,6 +11,7 @@ from sklearn.metrics import (
     classification_report, RocCurveDisplay, PrecisionRecallDisplay
 )
 import warnings
+
 warnings.filterwarnings('ignore')
 
 print("=" * 60)
@@ -30,7 +32,9 @@ purchaser_set = set(
 )
 
 # TODO: Filter the events dataframe to create a copy containing only actions leading up to purchases ('view', 'addtocart')
-pre_purchase = events[events['event'].isin(['view', 'addtocart'])].copy()
+pre_purchase = events[
+    events['event'].isin(['view', 'addtocart'])
+].copy()
 
 
 # --- EXTRACTION OF RAW COUNTS ---
@@ -62,12 +66,11 @@ unique_items = (
 
 # TODO: Count unique active days per user. Group by 'visitorid' and apply a lambda to count unique dates extracted from 'datetime'.
 active_days = (
-    pre_purchase
-    .assign(event_date=pre_purchase['datetime'].dt.normalize())
-    .groupby('visitorid')['event_date']
-    .nunique()
+    pre_purchase.groupby('visitorid')['datetime']
+    .apply(lambda dates: dates.dt.date.nunique())
     .reset_index(name='active_days')
 )
+
 
 # --- MERGING & ALIGNMENT ---
 
@@ -100,7 +103,7 @@ print(f"\n[2] Baseline feature matrix:")
 print(f"    Features used   : {RAW_FEATURES}")
 print(f"    Number of features : {len(RAW_FEATURES)}")
 print(f"    Total users     : {len(user_df):,}")
-print(f"    Purchase rate   : {user_df['purchased'].mean()*100:.2f}%")
+print(f"    Purchase rate   : {user_df['purchased'].mean() * 100:.2f}%")
 print(f"\n    Sample statistics:")
 print(user_df[RAW_FEATURES].describe().round(2).to_string())
 
@@ -209,17 +212,18 @@ print(f"    Best iteration  : {xgb_model.best_iteration if xgb_model is not None
 # ==========================================
 print("\n[6] Baseline comparison:")
 print(f"\n    {'Model':<30} {'AUC-ROC':>10} {'Avg-PR':>10}")
-print(f"    {'-'*50}")
+print(f"    {'-' * 50}")
 print(f"    {'Logistic Regression':<30} {lr_auc:>10.4f} {lr_ap:>10.4f}")
-print(f"    {'XGBoost (raw counts)':<30} {xgb_auc:>10.4f} {xgb_ap:>10.4f}")
-print(f"    {'Difference (XGB - LR)':<30} {xgb_auc - lr_auc:>+10.4f} {xgb_ap - lr_ap:>+10.4f}")
-# Ensure you evaluate differences by computing: (xgb_auc - lr_auc) and (xgb_ap - lr_ap)
+print(f"    {'XGBoost':<30} {xgb_auc:>10.4f} {xgb_ap:>10.4f}")
+print(f"    {'Difference (XGB - LR)':<30} {(xgb_auc - lr_auc):>+10.4f} {(xgb_ap - lr_ap):>+10.4f}")
 
 
 # ==========================================
 # [7] EVALUATION PLOTTING PIPELINE
 # ==========================================
 print("\n[7] Plotting evaluation curves...")
+
+os.makedirs("output", exist_ok=True)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 fig.suptitle(
@@ -234,14 +238,14 @@ fig.suptitle(
 RocCurveDisplay.from_predictions(
     y_test,
     lr_proba,
-    name=f"Logistic Regression (AUC={lr_auc:.3f})",
+    name=f"Logistic Regression (AUC = {lr_auc:.3f})",
     ax=axes[0]
 )
 
 RocCurveDisplay.from_predictions(
     y_test,
     xgb_proba,
-    name=f"XGBoost (AUC={xgb_auc:.3f})",
+    name=f"XGBoost (AUC = {xgb_auc:.3f})",
     ax=axes[0]
 )
 
@@ -256,14 +260,14 @@ axes[0].legend(fontsize=9)
 PrecisionRecallDisplay.from_predictions(
     y_test,
     lr_proba,
-    name=f"Logistic Regression (AP={lr_ap:.3f})",
+    name=f"Logistic Regression (AP = {lr_ap:.3f})",
     ax=axes[1]
 )
 
 PrecisionRecallDisplay.from_predictions(
     y_test,
     xgb_proba,
-    name=f"XGBoost (AP={xgb_ap:.3f})",
+    name=f"XGBoost (AP = {xgb_ap:.3f})",
     ax=axes[1]
 )
 
@@ -287,17 +291,17 @@ imp_df = pd.DataFrame({
     'importance': xgb_model.feature_importances_
 }).sort_values('importance', ascending=False)
 
-print(imp_df.to_string(index=False) if imp_df is not None else "    Not Implemented")
+print(imp_df.to_string(index=False))
 
 # --- Horizontal Importance Plotting ---
 fig, ax = plt.subplots(figsize=(7, 4))
+
 # TODO: Render an ax.barh layout tracing features against metrics.
 # Hint: Reversing the order using slice indexing [::-1] helps visually display the top performers at the apex of the plot.
 ax.barh(
-    imp_df['feature'][::-1],
-    imp_df['importance'][::-1],
-    color='#4C72B0',
-    edgecolor='white'
+    imp_df['feature'].iloc[::-1],
+    imp_df['importance'].iloc[::-1],
+    color='#4C72B0'
 )
 
 ax.set_title("Feature Importance — Raw Features Only\n(Before engineering)", fontweight='bold')

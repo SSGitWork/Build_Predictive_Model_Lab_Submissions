@@ -161,10 +161,7 @@ def lgb_objective(trial):
 
         # Define a float log-scale range between 0.01 and 0.3
         'learning_rate': trial.suggest_float(
-            'learning_rate',
-            0.01,
-            0.3,
-            log=True
+            'learning_rate', 0.01, 0.3, log=True
         ),
 
         # Define an integer leaf node range between 20 and 150
@@ -225,16 +222,19 @@ study = optuna.create_study(
 
 # TODO: Optimize the study running the lgb_objective routine across 30 distinct trials
 t0 = time.time()
+
 study.optimize(
     lgb_objective,
     n_trials=30,
     show_progress_bar=False
 )
+
 optuna_search_time = time.time() - t0
 
 print(f"\n    Best CV AUC  : {study.best_value if study is not None else 0:.4f}")
 print(f"    Search time  : {optuna_search_time:.1f}s")
 print(f"    Best params  :")
+
 if study is not None:
     for k, v in study.best_params.items():
         print(f"      {k:<25}: {v}")
@@ -246,6 +246,7 @@ print("\n[6] Retraining final LightGBM with best params...")
 
 # TODO: Extract and append background parameters onto the best configuration output found by your study
 best_params = {}
+
 if study is not None:
     best_params = study.best_params.copy()
 
@@ -286,7 +287,7 @@ print(f"    Training time        : {lgb_tuned_time:.1f}s")
 # ---------------------------------------------------------------------------
 print("\n[7] PARETO TRADEOFF — AUC vs Training Time:")
 print(f"\n    {'Model':<35} {'AUC':>8} {'AP':>8} {'Time(s)':>9} {'AUC/sec':>10}")
-print(f"    {'-' * 72}")
+print(f"    {'-'*72}")
 
 # TODO: Construct and display metrics analyzing execution time against raw classification score gains
 model_results = [
@@ -422,7 +423,7 @@ print(lgb_imp.to_string(index=False) if lgb_imp is not None else "    Not Implem
 fig, ax = plt.subplots(figsize=(9, 6))
 
 # TODO: Render a horizontal layout tracking relative features metrics using ax.barh()
-plot_imp = lgb_imp.iloc[::-1]
+plot_imp = lgb_imp.iloc[::-1].copy()
 
 ax.barh(
     plot_imp['feature'],
@@ -430,6 +431,10 @@ ax.barh(
     color='#55A868',
     edgecolor='white'
 )
+
+ax.set_title("LightGBM Feature Importance (Tuned)", fontweight='bold')
+ax.set_xlabel("Importance")
+ax.set_xlim(0, plot_imp['importance'].max() * 1.15)
 
 for index, importance in enumerate(plot_imp['importance']):
     ax.text(
@@ -440,8 +445,6 @@ for index, importance in enumerate(plot_imp['importance']):
         fontsize=8
     )
 
-ax.set_title("LightGBM Feature Importance (Tuned)", fontweight='bold')
-ax.set_xlabel("Importance")
 plt.tight_layout()
 plt.savefig("output/04_lgb_feature_importance.png", dpi=150, bbox_inches='tight')
 plt.show()
