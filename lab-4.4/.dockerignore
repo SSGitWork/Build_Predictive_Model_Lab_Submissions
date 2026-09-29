@@ -1,0 +1,49 @@
+# TODO: Add pattern filters to exclude unnecessary local files from the build context
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Notebooks and local virtual environments
+*.ipynb
+venv/
+.venv/
+env/
+lab4-venv/
+
+# Git and editor files
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# Local output and experiment tracking
+output/
+mlruns/
+*.db
+*.log
+
+# Large course data and model artifacts are mounted as volumes at runtime
+data/events.csv
+data/item_properties_part1.csv
+data/item_properties_part2.csv
+data/lightfm_artifacts.pkl
+data/lightfm_serving.pkl
+data/als_artifacts.pkl
+data/faiss_artifacts.pkl
+data/faiss_index.bin
+data/routing_split.pkl
+data/*.pkl
+
+# Docker and environment local-only settings
+.env
+docker-compose.override.yml

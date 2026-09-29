@@ -1,0 +1,60 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: recommender-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - recommender-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hybrid-recommender-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_TTL: ${REDIS_TTL:-3600}
+      TOP_K: ${TOP_K:-10}
+      INTERACTION_THRESHOLD: ${INTERACTION_THRESHOLD:-3}
+      ARTIFACTS_DIR: /app/data
+    volumes:
+      - ./data:/app/data:ro
+      - ./output:/app/output
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - recommender-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+networks:
+  recommender-network:
+    driver: bridge
+
+volumes:
+  redis_data:
